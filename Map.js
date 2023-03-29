@@ -20,10 +20,6 @@ export default function Map() {
     })();
   }, []);
 
-  if (location) {
-    var text = JSON.stringify(location);
-  }
-
   return (
     <View style={styles.container}>
       <MapView
