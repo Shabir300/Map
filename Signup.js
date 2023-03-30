@@ -60,12 +60,9 @@ const Signup = () => {
     })();
   }, []);
 
-
-
-
-  const handleSignUp = async (name, phone, email, password, subject1, subject2, subject3, subject4, location) => {
+  const handleSignUp = (name, phone, email, password, subject1, subject2, subject3, subject4, location) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       const userDocRef = doc(firestore, "users", name);
       const userData = {
@@ -77,7 +74,7 @@ const Signup = () => {
         location: location,
         subject: { subject1, subject2, subject3, subject4 },
       };
-      setDoc(userDocRef, userData);
+      //setDoc(userDocRef, userData);
 
 
 
