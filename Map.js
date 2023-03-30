@@ -15,7 +15,7 @@ export default function Map() {
     (async () => {
       await Location.requestForegroundPermissionsAsync();
       let location = await Location.getCurrentPositionAsync({});
-      console.log(location)
+      // console.log(location)
       setLocation(location.coords);
     })();
   }, []);

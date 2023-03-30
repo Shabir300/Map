@@ -3,15 +3,18 @@ import { TextInput, Button, Alert, Text, View, StyleSheet } from "react-native";
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { setCustomUserClaims } from "firebase/functions";
-import { app } from './firebaseConfig';
+import { app, auth } from './firebaseConfig';
 import { Picker } from "@react-native-picker/picker";
 import tw from 'tailwind-react-native-classnames';
-import MapView, { Marker } from 'react-native-maps';
-import { Constants, Location } from 'expo';
-import firebase from 'firebase/app';
-import 'firebase/firestore';
-import axios from 'axios';
-import GetLocation from 'react-native-get-location'
+// import firebase from 'firebase/app';
+// import 'firebase/firestore';
+// v9 compat packages are API compatible with v8 code
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+import Map from "./Map";
+import * as Location from 'expo-location';
+
 
 
 const Signup = () => {
@@ -19,6 +22,7 @@ const Signup = () => {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState()
   const [password, setPassword] = useState("");
   const [subject1, setSubject1] = useState("");
   const [subject2, setSubject2] = useState("");
@@ -26,33 +30,63 @@ const Signup = () => {
   const [subject4, setSubject4] = useState("");
   const [age, setAge] = useState(0);
   const [gender, setGender] = useState('');
-  const [location, setLocation] = useState({});
   const [locationText, setLocationText] = useState('')
   const [errorMsg, setErrorMsg] = useState(null);
 
-  const auth = getAuth();
+  // const auth = getAuth(app);
   const firestore = getFirestore();
   // const db = firebase.firestore();
 
-  const handleSignUp = async (name, email, password, subject1, subject2, subject3, subject4) => {
+
+  // firebase.auth().setLogLevel('debug');
+
+
+
+  const [location, setLocation] = useState({
+    latitude: 34.0,
+    longitude: 74.0,
+    latitudeDelta: 0.015,
+    longitudeDelta: 0.0121,
+  });
+
+
+
+  useEffect(() => {
+    (async () => {
+      await Location.requestForegroundPermissionsAsync();
+      let location = await Location.getCurrentPositionAsync({});
+      // console.log(location)
+      setLocation(location.coords);
+    })();
+  }, []);
+
+
+
+
+  const handleSignUp = async (name, phone, email, password, subject1, subject2, subject3, subject4, location) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       const userDocRef = doc(firestore, "users", name);
       const userData = {
         name: name,
+        email: email,
         gender: gender,
+        phone: phone,
         age: age,
+        location: location,
         subject: { subject1, subject2, subject3, subject4 },
       };
       setDoc(userDocRef, userData);
+
+
 
       //   await db.collection('users').doc(firebase.auth().currentUser.uid).set({
       //     location: new firebase.firestore.GeoPoint(location.latitude, location.longitude),
       //   });
 
       // navigate to home screen
-      navigation.navigate('Home');
+      // navigation.navigate('Home');
       // Set the user's display name and custom claims (subjects)
       //   await updateProfile(user, { displayName: name });
       //   await setCustomUserClaims(user.uid, { subjects: subjects });
@@ -68,7 +102,7 @@ const Signup = () => {
 
 
   const handleSignUpPress = () => {
-    handleSignUp(name, email, password, subject1, subject2, subject3, subject4);
+    handleSignUp(name, email, password, subject1, subject2, subject3, subject4, location);
   }
 
 
@@ -147,17 +181,6 @@ const Signup = () => {
     <>
       <Text style={tw`text-3xl text-center font-thin pt-5`}>Sign Up!</Text>
       <Text style={tw` text-center opacity-30 pt-1 pb-8`}>for a new account</Text>
-      {/* <Text>{locationText}</Text> */}
-      {/* <Text>{text}</Text> */}
-      {/* <View>
-  {errorMsg ? (
-    <Text>{errorMsg}</Text>
-  ) : (
-    <View>
-        <Text>Latitude: </Text>
-    </View>
-  )}
-</View> */}
 
       <TextInput
         placeholder="Name"
@@ -178,6 +201,16 @@ const Signup = () => {
         secureTextEntry={true}
         style={tw`px-5 py-1 ml-2 border rounded-full mr-28 my-1`}
       />
+
+      <TextInput
+        placeholder="Phone"
+        onChangeText={setPhone}
+        value={phone}
+        keyboardType={'numeric'}
+        style={tw`px-5 py-1 ml-2 border rounded-full mr-28 my-1`}
+      />
+
+
       <Picker
         selectedValue={gender}
         onValueChange={(itemValue) => setGender(itemValue)}
@@ -202,21 +235,7 @@ const Signup = () => {
 
       {/* MAP START  */}
 
-      <View style={styles.container}>
-        {location ? (
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: 33,
-              longitude: 73,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
-          />
-        ) : (
-          <Text>Loading...</Text>
-        )}
-      </View>
+      <Map />
 
       {/* MAP END */}
 
